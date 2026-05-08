@@ -1,4 +1,8 @@
+import easyocr
 import PyPDF2
+
+reader_ocr = easyocr.Reader(['en'])
+
 def extract_text_from_pdf(file_path):
     text = ""
     try:
@@ -10,4 +14,12 @@ def extract_text_from_pdf(file_path):
                     text += extracted
     except Exception as e:
         print("PDF reading error:", e)
+    return text
+
+def extract_text_from_image(image_path):
+    result = reader_ocr.readtext(
+        image_path,
+        detail=0
+    )
+    text = " ".join(result)
     return text
