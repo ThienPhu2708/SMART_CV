@@ -12,9 +12,9 @@ Dự án được tổ chức khoa học để phục vụ quá trình phát tri
 
 📂 Data/: Quản lý dữ liệu đầu vào.
 
-Raw/: Chứa Dataset gốc (Resume.csv) và các tệp CV mẫu định dạng PDF.
+- Raw/: Chứa Dataset gốc (Resume.csv) và các tệp CV mẫu định dạng PDF.
 
-Processed/: Lưu trữ dữ liệu sau khi đã được chuẩn hóa và chuyển đổi số.
+- Processed/: Lưu trữ dữ liệu sau khi đã được chuẩn hóa và chuyển đổi số.
 
 📂 Models/: Lưu trữ các phiên bản mô hình MLP đã huấn luyện thành công.
 
@@ -22,11 +22,11 @@ Processed/: Lưu trữ dữ liệu sau khi đã được chuẩn hóa và chuy�
 
 📂 SRC/: Mã nguồn lõi của ứng dụng.
 
-Processing/: Module trích xuất văn bản (PDF) và nhận diện ký tự (OCR).
+- Processing/: Module trích xuất văn bản (PDF) và nhận diện ký tự (OCR).
 
-model_mlp.py: Định nghĩa kiến trúc mạng nơ-ron nhân tạo.
+- model_mlp.py: Định nghĩa kiến trúc mạng nơ-ron nhân tạo.-
 
-logic_gates.py: Cài đặt các quy tắc logic nghiệp vụ.
+- logic_gates.py: Cài đặt các quy tắc logic nghiệp vụ.
 
 📂 App/: Giao diện người dùng và Dashboard điều khiển.
 
