@@ -1,0 +1,31 @@
+# --- Môi trường ảo (Virtual Environment) ---
+# Tuyệt đối không đẩy thư mục này lên GitHub vì nó rất nặng và chứa các đường dẫn cục bộ
+venv/
+env/
+
+# --- Python cache ---
+# Các tệp tạm phát sinh khi chạy code Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Kết quả huấn luyện (Models) ---
+# Giữ lại thư mục nhưng bỏ qua các tệp trọng số mô hình nặng (.pth, .h5)
+# Bạn nên nộp file model trực tiếp hoặc qua link Drive thay vì đẩy lên Git
+models/*.pth
+models/*.h5
+models/*.model
+
+# --- Dữ liệu (Data) ---
+# Giữ lại cấu trúc thư mục nhưng bỏ qua các tệp dữ liệu đã xử lý để tiết kiệm dung lượng
+data/processed/*
+
+# --- Tệp cấu hình IDE ---
+# Bỏ qua các thiết lập riêng của VS Code trên máy bạn
+.vscode/
+.idea/
+
+# --- Tệp rác của hệ thống ---
+.DS_Store
+Thumbs.db
