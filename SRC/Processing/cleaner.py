@@ -8,7 +8,7 @@ def clean_text(text):
     text = text.lower()
     # remove email
     text = re.sub(r'\S+@\S+', '', text)
-    # remove website
+    # remove url
     text = re.sub(r'http\S+|www\S+', '', text)
     # remove phone numbers
     text = re.sub(r'\d+', '', text)
