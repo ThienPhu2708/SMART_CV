@@ -19,7 +19,8 @@ models/*.model
 
 # --- Dữ liệu (Data) ---
 # Giữ lại cấu trúc thư mục nhưng bỏ qua các tệp dữ liệu đã xử lý để tiết kiệm dung lượng
-data/processed/*
+Data/Processed/*
+!Data/Processed/.gitkeep
 
 # --- Tệp cấu hình IDE ---
 # Bỏ qua các thiết lập riêng của VS Code trên máy bạn
