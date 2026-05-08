@@ -10,20 +10,18 @@ __pycache__/
 *.pyo
 *.pyd
 
-# --- Kết quả huấn luyện (Models) ---
-# Giữ lại thư mục nhưng bỏ qua các tệp trọng số mô hình nặng (.pth, .h5)
-# Bạn nên nộp file model trực tiếp hoặc qua link Drive thay vì đẩy lên Git
-models/*.pth
-models/*.h5
-models/*.model
+# --- Thư mục Models ---
+# Chặn các file trọng số nặng nhưng vẫn giữ thư mục
+Models/*.pth
+Models/*.h5
+Models/*.model
 
-# --- Dữ liệu (Data) ---
-# Giữ lại cấu trúc thư mục nhưng bỏ qua các tệp dữ liệu đã xử lý để tiết kiệm dung lượng
+# --- Thư mục Data ---
+# Chặn dữ liệu đã xử lý nhưng giữ lại file .gitkeep để hiện thư mục trên GitHub
 Data/Processed/*
 !Data/Processed/.gitkeep
 
-# --- Tệp cấu hình IDE ---
-# Bỏ qua các thiết lập riêng của VS Code trên máy bạn
+# --- IDE và Hệ thống ---
 .vscode/
 .idea/
 
