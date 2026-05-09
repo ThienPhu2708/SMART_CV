@@ -21,6 +21,8 @@ Models/*.model
 Data/Processed/*
 !Data/Processed/.gitkeep
 
+# --- OCR temp files ---
+temp_page_*.jpg
 # --- IDE và Hệ thống ---
 .vscode/
 .idea/
