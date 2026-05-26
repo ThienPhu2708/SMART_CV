@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"d:\\\\Nam3_DH\\\\DeepLearning\\\\SMART_CV\"; $env:PYTHONIOENCODING=\"utf-8\"; .\\\\venv\\\\Scripts\\\\python.exe train.py 2>&1)"
+    ]
+  }
+}
