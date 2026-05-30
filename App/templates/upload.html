@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Upload CV{% endblock %}
+{% block page_title %}Upload CV{% endblock %}
+{% block page_subtitle %}
+  {% if current_job %}Đang sàng lọc: <strong>{{ current_job.job_title }}</strong>{% else %}Chưa cấu hình job{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not current_job %}
+<div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-6 flex items-center gap-3">
+  <svg class="w-5 h-5 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+  </svg>
+  <p class="text-sm text-yellow-800">Bạn chưa cấu hình job. <a href="/jobs/new" class="font-semibold underline">Tạo Job ngay</a> để bắt đầu.</p>
+</div>
+{% endif %}
+
+<div x-data="uploadManager()" class="grid grid-cols-2 gap-6">
+
+  <!-- ── Cột trái: Upload zone + file list ───────────────────────────────────── -->
+  <div class="space-y-5">
+
+    <!-- Dropzone -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div @dragover.prevent="isDragging = true"
+           @dragleave.prevent="isDragging = false"
+           @drop.prevent="handleDrop($event)"
+           :class="isDragging ? 'border-slate-900 bg-slate-50' : 'border-slate-300'"
+           class="border-2 border-dashed rounded-xl m-4 p-10 text-center transition-all cursor-pointer"
+           @click="$refs.fileInput.click()">
+        <svg class="w-10 h-10 text-slate-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-sm font-medium text-slate-700">Kéo thả CV vào đây</p>
+        <p class="text-xs text-slate-400 mt-1">PDF · JPG · PNG · Tối đa 50 file · 10MB/file</p>
+        <button type="button"
+                class="mt-4 px-4 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-700 transition-colors">
+          Chọn file
+        </button>
+        <input x-ref="fileInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" class="hidden"
+               @change="handleFiles($event.target.files)" />
+      </div>
+
+      <!-- Progress + Upload all button -->
+      <div x-show="files.length > 0" class="px-4 pb-4 flex items-center justify-between gap-3">
+        <p class="text-xs text-slate-500">
+          <span x-text="doneCount"></span>/<span x-text="files.length"></span> file đã xử lý
+        </p>
+        <button @click="uploadAll()"
+                :disabled="isUploading || !canUpload"
+                class="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-colors flex items-center gap-2">
+          <svg x-show="isUploading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span x-text="isUploading ? 'Đang xử lý...' : 'Phân tích tất cả'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm" x-show="files.length > 0">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h3 class="font-semibold text-slate-900 text-sm">Danh sách file</h3>
+      </div>
+      <div class="divide-y divide-slate-100 max-h-[460px] overflow-y-auto">
+        <template x-for="(file, i) in files" :key="i">
+          <div class="px-5 py-3">
+            <div class="flex items-center gap-3">
+              <!-- PDF icon -->
+              <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-900 truncate" x-text="file.name"></p>
+                <p class="text-xs text-slate-400" x-text="file.statusText"></p>
+              </div>
+              <!-- Status badge -->
+              <span x-show="file.done && file.result"
+                    :class="{
+                      'bg-green-50 text-green-700 border-green-200': file.result?.status === 'ĐẠT',
+                      'bg-red-50 text-red-700 border-red-200': file.result?.status === 'LOẠI',
+                      'bg-slate-50 text-slate-600 border-slate-200': file.result?.status === 'LỖI'
+                    }"
+                    class="text-xs px-2 py-0.5 rounded-full border font-medium flex-shrink-0"
+                    x-text="file.result?.status"></span>
+              <!-- Loading spinner -->
+              <svg x-show="file.loading" class="w-4 h-4 text-slate-400 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+            <!-- Progress bar -->
+            <div x-show="file.loading || file.done" class="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full transition-all duration-500 rounded-full"
+                   :class="file.done ? (file.result?.status === 'ĐẠT' ? 'bg-green-500' : file.result?.status === 'LỖI' ? 'bg-red-400' : 'bg-red-400') : 'bg-slate-400 animate-pulse'"
+                   :style="`width: ${file.done ? 100 : file.progress}%`"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div x-show="files.length === 0" class="bg-white rounded-xl border border-slate-200 shadow-sm p-10 text-center">
+      <p class="text-sm text-slate-400">Chưa có file nào. Kéo thả hoặc chọn file PDF ở trên.</p>
+    </div>
+  </div>
+
+  <!-- ── Cột phải: Ranking real-time ────────────────────────────────────────── -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-900 text-sm">Bảng xếp hạng ứng viên</h3>
+      <span class="text-xs text-slate-500"><span x-text="ranking.length"></span> ứng viên</span>
+    </div>
+
+    <!-- Ranking table -->
+    <div class="flex-1 overflow-y-auto">
+      <template x-if="ranking.length > 0">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-xs text-slate-500 uppercase sticky top-0">
+            <tr>
+              <th class="px-4 py-3 text-left w-10">#</th>
+              <th class="px-4 py-3 text-left">Ứng viên</th>
+              <th class="px-4 py-3 text-center">Score</th>
+              <th class="px-4 py-3 text-center">Logic</th>
+              <th class="px-4 py-3 text-center">Kết quả</th>
+              <th class="px-4 py-3 text-center"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <template x-for="(r, i) in ranking" :key="r.id">
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-4 py-3 text-slate-500 font-medium" x-text="i + 1"></td>
+                <td class="px-4 py-3">
+                  <p class="font-medium text-slate-900 truncate max-w-[140px]" x-text="r.filename"></p>
+                  <p class="text-xs text-slate-400" x-text="r.category"></p>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="text-sm font-semibold text-slate-900" x-text="r.confidence.toFixed(1) + '%'"></span>
+                    <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-slate-700 rounded-full" :style="`width: ${r.confidence}%`"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span class="text-xs font-medium text-slate-600" x-text="r.logic_score"></span>
+                  <span class="text-xs text-slate-400"> ✓</span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span :class="{
+                    'bg-green-50 text-green-700 border-green-200': r.status === 'ĐẠT',
+                    'bg-red-50 text-red-700 border-red-200': r.status === 'LOẠI',
+                    'bg-slate-50 text-slate-600 border-slate-200': r.status === 'LỖI'
+                  }" class="text-xs px-2 py-0.5 rounded-full border font-medium" x-text="r.status"></span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <a :href="'/candidates/' + r.id"
+                     class="text-xs text-slate-500 hover:text-slate-900 underline">Chi tiết</a>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </template>
+
+      <div x-show="ranking.length === 0" class="flex flex-col items-center justify-center h-full py-20">
+        <svg class="w-12 h-12 text-slate-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <p class="text-sm text-slate-400">Chưa có kết quả. Upload CV để bắt đầu.</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div x-show="ranking.length > 0" class="px-5 py-3 border-t border-slate-100 flex justify-between items-center">
+      <p class="text-xs text-slate-500">Sắp xếp theo độ tin cậy AI giảm dần</p>
+      <a href="/results" class="text-xs text-slate-700 font-semibold hover:underline">Xem báo cáo đầy đủ →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAN_UPLOAD = {{ 'true' if current_job else 'false' }};
+
+function uploadManager() {
+  return {
+    files:      [],
+    ranking:    [],
+    isDragging: false,
+    isUploading: false,
+
+    get doneCount() { return this.files.filter(f => f.done).length; },
+    get canUpload() { return CAN_UPLOAD && this.files.some(f => !f.done); },
+
+    handleDrop(e) {
+      this.isDragging = false;
+      this.handleFiles(e.dataTransfer.files);
+    },
+
+    handleFiles(fileList) {
+      const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png'];
+      for (const f of fileList) {
+        const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+        if (!ALLOWED.includes(ext)) { showToast(`${f.name}: chỉ hỗ trợ PDF, JPG, PNG`, 'error'); continue; }
+        if (f.size > 10 * 1024 * 1024) { showToast(`${f.name} vượt quá 10MB`, 'error'); continue; }
+        if (this.files.find(x => x.name === f.name)) continue;
+        this.files.push({ file: f, name: f.name, loading: false, done: false, progress: 0, result: null, statusText: 'Chờ xử lý...' });
+      }
+    },
+
+    async uploadAll() {
+      if (!CAN_UPLOAD) { showToast('Hãy cấu hình Job trước!', 'error'); return; }
+      this.isUploading = true;
+      const pending = this.files.filter(f => !f.done);
+      for (const fileObj of pending) {
+        await this.processFile(fileObj);
+      }
+      this.isUploading = false;
+      if (this.ranking.length) showToast(`Hoàn tất! ${this.ranking.length} ứng viên đã xếp hạng.`, 'success');
+    },
+
+    async processFile(fileObj) {
+      fileObj.loading    = true;
+      fileObj.progress   = 20;
+      fileObj.statusText = 'Đang trích xuất văn bản...';
+
+      try {
+        const form = new FormData();
+        form.append('files', fileObj.file);
+        fileObj.progress   = 50;
+        fileObj.statusText = 'Đang phân tích (BERT + MLP)...';
+
+        const res  = await fetch('/candidates/upload', { method: 'POST', body: form });
+        const data = await res.json();
+
+        if (!res.ok) { throw new Error(data.error || 'Server error'); }
+
+        const result        = data.results[0];
+        fileObj.result      = result;
+        fileObj.progress    = 100;
+        fileObj.done        = true;
+        fileObj.loading     = false;
+        fileObj.statusText  = result.status === 'LỖI'
+          ? `Lỗi: ${result.error}`
+          : `${result.status} · ${result.category} · ${result.confidence.toFixed(1)}%`;
+
+        if (result.status !== 'LỖI') {
+          this.ranking.push(result);
+          this.ranking.sort((a, b) => b.confidence - a.confidence);
+        }
+      } catch (e) {
+        fileObj.done       = true;
+        fileObj.loading    = false;
+        fileObj.progress   = 100;
+        fileObj.result     = { status: 'LỖI' };
+        fileObj.statusText = `Lỗi: ${e.message}`;
+        showToast(`Lỗi xử lý ${fileObj.name}`, 'error');
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

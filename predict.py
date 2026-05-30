@@ -1,118 +1,127 @@
-import torch
-import numpy as np
+"""
+predict.py — Pipeline 4 tầng: OCR → BERT Encoder → MLP Head → Logic Gates
+"""
 import os
-import pickle
-import ssl
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
+import torch
 
 from SRC.Processing.extractor import extract_text
 from SRC.Processing.cleaner import clean_text, translate_if_needed
-from SRC.model_mlp import SmartCV_MLP
-from SRC.logic_gates import check_mandatory_skills
+from SRC.Processing.bert_encoder import encode_single
+from SRC.model_bert import SmartCV_BERT
+from SRC.logic_gates import evaluate_candidate, check_keyword
+
+BERT_MODEL_PATH  = "Models/bert_classifier.pth"
+BERT_CONFIG_PATH = "Models/bert_config.json"
 
 
-def run_prediction(pdf_path, required_skills):
+def load_model():
+    import json
+    if not (os.path.exists(BERT_MODEL_PATH) and os.path.exists(BERT_CONFIG_PATH)):
+        raise FileNotFoundError("Chưa có model. Chạy train_bert.py trước!")
+    with open(BERT_CONFIG_PATH, "r", encoding="utf-8") as f:
+        config = json.load(f)
+    model = SmartCV_BERT(embed_dim=config["embed_dim"], num_classes=config["num_classes"])
+    model.load_state_dict(torch.load(BERT_MODEL_PATH, map_location="cpu"))
+    model.eval()
+    return model, config
+
+
+def run_prediction(cv_path: str, required_skills: list = None, optional_skills: list = None,
+                   blacklist: list = None, exclusive_pair: list = None):
     """
-    Pipeline: PDF -> OCR -> Cleaning -> Logic Filter -> AI Classification
-    Returns dict with result or None on failure.
+    Pipeline: CV file → Text → Translate → Clean → BERT → MLP → Logic Gates
+    Trả về dict kết quả hoặc None nếu lỗi.
     """
-    print(f"\n--- ĐANG PHÂN TÍCH HỒ SƠ: {os.path.basename(pdf_path)} ---")
+    required_skills  = required_skills or []
+    optional_skills  = optional_skills or []
+    blacklist        = blacklist or []
+    exclusive_pair   = exclusive_pair or []
 
-    # BƯỚC 1: Trích xuất văn bản
-    print("Bước 1: Đang trích xuất văn bản từ PDF...")
+    print(f"\n--- ĐANG PHÂN TÍCH: {os.path.basename(cv_path)} ---")
+
+    # Tầng 1: Trích xuất văn bản
+    print("Tầng 1: Trích xuất văn bản (PDF/OCR)...")
     try:
-        raw_text = extract_text(pdf_path)
+        raw_text = extract_text(cv_path)
     except Exception as e:
-        print(f"Lỗi trích xuất: {e}")
+        print(f"  Lỗi trích xuất: {e}")
+        return None
+    if not raw_text or len(raw_text.strip()) < 30:
+        print("  Không trích xuất được nội dung.")
         return None
 
-    # BƯỚC 2: Dịch sang tiếng Anh nếu CV không phải tiếng Anh
-    print("Bước 2: Kiểm tra và dịch ngôn ngữ (nếu cần)...")
+    # Dịch nếu không phải tiếng Anh
     raw_text = translate_if_needed(raw_text)
+    cleaned  = clean_text(raw_text)
 
-    # BƯỚC 3: Làm sạch văn bản
-    print("Bước 3: Đang làm sạch dữ liệu...")
-    cleaned_text = clean_text(raw_text)
-
-    # BƯỚC 4: Logic Gate - kiểm tra kỹ năng bắt buộc (chỉ cảnh báo, không chặn MLP)
-    print("Bước 4: Kiểm tra kỹ năng bắt buộc (Logic AND Gate)...")
-    is_qualified = check_mandatory_skills(cleaned_text, required_skills)
-
-    # BƯỚC 5: Dự đoán bằng MLP — luôn chạy bất kể Logic Gate
-    print("Bước 5: Đang phân loại bằng mạng Neural MLP...")
+    # Tầng 2: BERT Encoder → vector 384 chiều
+    print("Tầng 2: BERT Encoder mã hóa ngữ nghĩa...")
     try:
-        if not os.path.exists("Models/classes.npy") or not os.path.exists("Models/smartcv_model.pth"):
-            print("Lỗi: Thiếu file model. Hãy chạy train.py trước!")
-            return None
-
-        classes = np.load("Models/classes.npy", allow_pickle=True)
-
-        vectorizer_path = "Data/Processed/tfidf_vectorizer.pkl"
-        if not os.path.exists(vectorizer_path):
-            print("Lỗi: Thiếu file vectorizer. Hãy chạy main.py trước!")
-            return None
-
-        with open(vectorizer_path, "rb") as f:
-            vectorizer = pickle.load(f)
-
-        input_vector = vectorizer.transform([cleaned_text]).toarray()
-        input_size = input_vector.shape[1]          # dynamic, không hardcode
-        input_tensor = torch.tensor(input_vector).float()
-
-        model = SmartCV_MLP(input_size=input_size, num_classes=len(classes))
-        model.load_state_dict(torch.load("Models/smartcv_model.pth", map_location="cpu"))
-        model.eval()
-
-        with torch.no_grad():
-            output = model(input_tensor)
-            probabilities = torch.nn.functional.softmax(output, dim=1)
-            confidence, predicted = torch.max(probabilities, 1)
-            category = classes[predicted.item()]
-            confidence_pct = confidence.item() * 100
-
-        all_probs = {classes[i]: probabilities[0][i].item() * 100 for i in range(len(classes))}
-
-        # Kết hợp: Logic Gate quyết định status, MLP luôn trả kết quả
-        if is_qualified:
-            status = "ĐẠT"
-            reason = "Đáp ứng tất cả tiêu chí"
-        else:
-            missing = [s for s in required_skills
-                       if not check_mandatory_skills(cleaned_text, [s])]
-            status = "LOẠI"
-            reason = f"Thiếu kỹ năng bắt buộc: {', '.join(missing)}"
-
-        print(f"KẾT QUẢ: {status}")
-        print(f"Chuyên môn dự đoán: {category}")
-        print(f"Độ tin cậy: {confidence_pct:.2f}%")
-        if status == "LOẠI":
-            print(f"Lưu ý: MLP vẫn dự đoán ngành → HR nên xem xét lại tiêu chí")
-
-        return {
-            "status":     status,
-            "reason":     reason,
-            "category":   category,
-            "confidence": confidence_pct,
-            "text":       cleaned_text,
-            "all_probs":  all_probs,
-        }
-
-    except Exception as e:
-        print(f"Lỗi hệ thống AI: {e}")
+        model, config = load_model()
+    except FileNotFoundError as e:
+        print(f"  {e}")
         return None
+
+    embedding = encode_single(cleaned)
+    tensor    = torch.tensor(embedding, dtype=torch.float32)
+
+    # Tầng 3: MLP Head phân loại ngành
+    print("Tầng 3: MLP Head phân loại ngành...")
+    classes = config["classes"]
+    with torch.no_grad():
+        probs = torch.nn.functional.softmax(model(tensor), dim=1)[0]
+    conf, pred = torch.max(probs, 0)
+    category   = classes[pred.item()]
+    confidence = float(conf) * 100
+    all_probs  = {classes[i]: float(probs[i]) * 100 for i in range(len(classes))}
+
+    # Tầng 4: Logic Gates
+    print("Tầng 4: Logic Gates (AND/OR/NOT/XOR)...")
+    logic_result = evaluate_candidate(
+        cleaned,
+        required_skills=required_skills,
+        optional_skills=optional_skills,
+        blacklist=blacklist,
+        exclusive_pair=exclusive_pair if len(exclusive_pair) == 2 else None,
+    )
+
+    if logic_result["overall_pass"]:
+        status = "ĐẠT"
+        reason = "Đáp ứng tất cả tiêu chí"
+    else:
+        reasons = []
+        if not logic_result.get("mandatory_pass"):
+            missing = [s for s in required_skills if not check_keyword(cleaned, s)]
+            if missing:
+                reasons.append(f"Thiếu kỹ năng: {', '.join(missing)}")
+        if not logic_result.get("blacklist_pass"):
+            reasons.append("Chứa từ khóa bị cấm")
+        status = "LOẠI"
+        reason = " | ".join(reasons) if reasons else "Không đạt tiêu chí"
+
+    print(f"\nKẾT QUẢ: {status}")
+    print(f"Ngành dự đoán: {category}  ({confidence:.1f}%)")
+    print(f"Lý do: {reason}")
+    print("\nXác suất tất cả ngành:")
+    for cat, p in sorted(all_probs.items(), key=lambda x: -x[1]):
+        print(f"  {cat:<30} {p:.1f}%")
+
+    return {
+        "status":       status,
+        "reason":       reason,
+        "category":     category,
+        "confidence":   confidence,
+        "all_probs":    all_probs,
+        "logic_result": logic_result,
+        "cleaned_text": cleaned,
+    }
 
 
 if __name__ == "__main__":
-    REQUIRED_SKILLS = []
-    CV_PATH = "Data/Raw/cv_scan.pdf"
+    CV_PATH = "Data/Test_CVs/6_nganh_chinh/CV_INFORMATION-TECHNOLOGY.pdf"
+    REQUIRED = ["python", "sql"]
 
     if os.path.exists(CV_PATH):
-        run_prediction(CV_PATH, REQUIRED_SKILLS)
+        run_prediction(CV_PATH, required_skills=REQUIRED)
     else:
-        print(f"Không tìm thấy file: {CV_PATH}")
+        print(f"Không tìm thấy: {CV_PATH}")

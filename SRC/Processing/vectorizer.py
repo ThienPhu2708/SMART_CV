@@ -20,9 +20,9 @@ def create_tfidf_vectors():
     # min_df=2: Loại bỏ từ chỉ xuất hiện 1 lần (thường là tên riêng hoặc lỗi đánh máy)
     # max_df=0.8: Loại bỏ các từ xuất hiện ở hơn 80% số lượng hồ sơ (từ quá phổ thông)
     vectorizer = TfidfVectorizer(
-        max_features=800,    # giảm từ 1500 → 800: tỷ lệ features/samples tốt hơn
+        max_features=600,    # giảm 1000→600: ít features → giảm capacity → bớt ghi nhớ
         ngram_range=(1, 2),
-        min_df=3,
+        min_df=2,
         max_df=0.75,
         stop_words='english'
     )

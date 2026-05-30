@@ -3,20 +3,45 @@ import re
 _stop_words  = None
 _lemmatizer  = None
 
+_VI_CHARS = re.compile(
+    r'[àáạảãâầấậẩẫăặắẳẵđèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ'
+    r'ÀÁẠẢÃÂẦẤẬẨẪĂẶẮẲẴĐÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ]'
+)
+
+def _has_vietnamese(text: str) -> bool:
+    """
+    Trả về True chỉ khi tỉ lệ ký tự tiếng Việt vượt ngưỡng 8% tổng chữ cái.
+    Tránh kích hoạt dịch thuật cho CV tiếng Anh chỉ có tên/địa chỉ tiếng Việt.
+    """
+    if not text:
+        return False
+    vi_chars = len(_VI_CHARS.findall(text))
+    alpha_chars = sum(1 for c in text if c.isalpha())
+    if alpha_chars == 0:
+        return False
+    return (vi_chars / alpha_chars) > 0.08
+
 
 def translate_if_needed(text):
     """
     Phát hiện ngôn ngữ và dịch sang tiếng Anh nếu cần.
-    Hỗ trợ tiếng Việt và các ngôn ngữ khác không phải tiếng Anh.
+    Ưu tiên kiểm tra ký tự tiếng Việt trước langdetect để tránh nhầm lẫn
+    với CV song ngữ (tiếng Việt + thuật ngữ kỹ thuật tiếng Anh).
     Fallback an toàn: nếu lỗi thư viện hoặc network thì trả nguyên text.
     """
     if not text or len(text.strip()) < 30:
         return text
     try:
-        from langdetect import detect
-        lang = detect(text[:800])
-        if lang == 'en':
+        # Bước 1: kiểm tra ký tự tiếng Việt trực tiếp (độ tin cậy cao hơn)
+        if _has_vietnamese(text):
+            need_translate = True
+        else:
+            from langdetect import detect
+            need_translate = detect(text[:800]) != 'en'
+
+        if not need_translate:
             return text
+
         from deep_translator import GoogleTranslator
         translator = GoogleTranslator(source='auto', target='en')
         # GoogleTranslator giới hạn 5000 ký tự/lần gọi
@@ -75,9 +100,49 @@ def _get_lemmatizer():
     return _lemmatizer
 
 
+_SKILLS_HEADER = re.compile(
+    r'(?:skills?|kỹ năng|competenc|expertise|technical|languages?|frameworks?|tools?)',
+    re.IGNORECASE,
+)
+_SECTION_BREAK = re.compile(
+    r'(?:experience|education|project|work history|học vấn|dự án|kinh nghiệm|'
+    r'certif|achievement|award|reference|introduction|giới thiệu)',
+    re.IGNORECASE,
+)
+
+def _boost_skills_section(text: str, repeat: int = 2) -> str:
+    """
+    Nhân đôi nội dung phần Skills để tăng trọng số cho TF-IDF.
+    Giúp MLP phân biệt kỹ năng thực sự vs từ khóa xuất hiện trong mô tả dự án.
+    """
+    lines = text.splitlines()
+    in_skills = False
+    skills_lines: list[str] = []
+    result_lines: list[str] = []
+
+    for line in lines:
+        if _SKILLS_HEADER.search(line):
+            in_skills = True
+        elif in_skills and _SECTION_BREAK.search(line):
+            in_skills = False
+
+        result_lines.append(line)
+        if in_skills and line.strip():
+            skills_lines.append(line)
+
+    if skills_lines:
+        # Lặp lại phần skills ở cuối để tăng tần suất token
+        result_lines += skills_lines * (repeat - 1)
+
+    return "\n".join(result_lines)
+
+
 def clean_text(text):
     if not text or not isinstance(text, str):
         return ""
+
+    # Tăng trọng số phần Skills trước khi xóa cấu trúc
+    text = _boost_skills_section(text)
 
     text = text.lower()
 

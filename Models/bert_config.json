@@ -1,0 +1,18 @@
+{
+  "encoder_name": "paraphrase-multilingual-MiniLM-L12-v2",
+  "embed_dim": 384,
+  "num_classes": 6,
+  "classes": [
+    "BUSINESS-DEVELOPMENT",
+    "CONSULTANT",
+    "DIGITAL-MEDIA",
+    "INFORMATION-TECHNOLOGY",
+    "PUBLIC-RELATIONS",
+    "SALES"
+  ],
+  "best_val_f1": 91.5421,
+  "best_val_acc": 91.6201,
+  "test_accuracy": 88.8889,
+  "test_macro_f1": 88.8439,
+  "split": "70/15/15 (train/val/test)"
+}

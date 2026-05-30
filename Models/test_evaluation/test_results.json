@@ -1,0 +1,658 @@
+[
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-02.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 27.5,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-03.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 76.3,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-04.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 79.38,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-05.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 46.26,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-06.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 80.7,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-07.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 90.42,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-08.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 71.65,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-09.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 90.65,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT-10.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 60.85,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/BUSINESS-DEVELOPMENT",
+    "filename": "CV_BUSINESS-DEVELOPMENT.pdf",
+    "ground_truth": "BUSINESS-DEVELOPMENT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 79.15,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-02.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "CONSULTANT",
+    "confidence": 41.05,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-03.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 83.47,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-04.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "CONSULTANT",
+    "confidence": 38.94,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-05.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 53.77,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-06.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 44.41,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-07.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "CONSULTANT",
+    "confidence": 42.47,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-08.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "CONSULTANT",
+    "confidence": 32.18,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-09.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 35.57,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT-10.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 33.56,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/CONSULTANT",
+    "filename": "CV_CONSULTANT.pdf",
+    "ground_truth": "CONSULTANT",
+    "prediction": "CONSULTANT",
+    "confidence": 70.35,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-02.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 87.41,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-03.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 93.54,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-04.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 94.82,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-05.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 84.81,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-06.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 75.74,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-07.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 81.5,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-08.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 88.27,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-09.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 65.71,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA-10.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 73.85,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/DIGITAL-MEDIA",
+    "filename": "CV_DIGITAL-MEDIA.pdf",
+    "ground_truth": "DIGITAL-MEDIA",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 38.34,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-02.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 94.08,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-03.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 74.33,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-04.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 98.49,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-05.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 77.73,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-06.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 42.66,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-07.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 90.23,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-08.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "SALES",
+    "confidence": 35.98,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-09.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 74.62,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY-10.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 87.04,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/INFORMATION-TECHNOLOGY",
+    "filename": "CV_INFORMATION-TECHNOLOGY.pdf",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 72.49,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-02.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 52.71,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-03.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 45.63,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-04.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 48.52,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-05.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 36.42,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-06.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 60.68,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-07.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 50.83,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-08.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 44.93,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-09.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 43.46,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS-10.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 65.93,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/PUBLIC-RELATIONS",
+    "filename": "CV_PUBLIC-RELATIONS.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 77.14,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-02.pdf",
+    "ground_truth": "SALES",
+    "prediction": "SALES",
+    "confidence": 35.01,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-03.pdf",
+    "ground_truth": "SALES",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 55.25,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-04.pdf",
+    "ground_truth": "SALES",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 82.36,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-05.pdf",
+    "ground_truth": "SALES",
+    "prediction": "SALES",
+    "confidence": 60.27,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-06.pdf",
+    "ground_truth": "SALES",
+    "prediction": "SALES",
+    "confidence": 39.49,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-07.pdf",
+    "ground_truth": "SALES",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 39.18,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-08.pdf",
+    "ground_truth": "SALES",
+    "prediction": "SALES",
+    "confidence": 58.74,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-09.pdf",
+    "ground_truth": "SALES",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 92.45,
+    "correct": false
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES-10.pdf",
+    "ground_truth": "SALES",
+    "prediction": "SALES",
+    "confidence": 43.59,
+    "correct": true
+  },
+  {
+    "folder": "6_nganh_chinh/SALES",
+    "filename": "CV_SALES.pdf",
+    "ground_truth": "SALES",
+    "prediction": "SALES",
+    "confidence": 67.14,
+    "correct": true
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_ACCOUNTANT.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 54.2,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_ADVOCATE.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "SALES",
+    "confidence": 24.9,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_AGRICULTURE.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 84.22,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_APPAREL.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 49.57,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_ARTS.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "SALES",
+    "confidence": 65.82,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_AUTOMOBILE.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 28.06,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_AVIATION.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 52.44,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_BANKING.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 77.97,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_BPO.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 36.21,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_CHEF.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 76.9,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_CONSTRUCTION.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 29.21,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_DESIGNER.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 57.96,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_ENGINEERING.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 45.31,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_FINANCE.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 31.03,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_FITNESS.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "CONSULTANT",
+    "confidence": 46.47,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_HEALTHCARE.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "SALES",
+    "confidence": 49.69,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_HR.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "BUSINESS-DEVELOPMENT",
+    "confidence": 30.81,
+    "correct": false
+  },
+  {
+    "folder": "ngoai_he_thong",
+    "filename": "CV_TEACHER.pdf",
+    "ground_truth": "UNKNOWN",
+    "prediction": "PUBLIC-RELATIONS",
+    "confidence": 44.85,
+    "correct": false
+  },
+  {
+    "folder": "ocr_test",
+    "filename": "Information_Technology.jpg",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 97.37,
+    "correct": true
+  },
+  {
+    "folder": "ocr_test",
+    "filename": "Information_Technology_software.jpg",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 35.14,
+    "correct": true
+  },
+  {
+    "folder": "ocr_test",
+    "filename": "Software_Enginee.jpg",
+    "ground_truth": "INFORMATION-TECHNOLOGY",
+    "prediction": "INFORMATION-TECHNOLOGY",
+    "confidence": 91.84,
+    "correct": true
+  },
+  {
+    "folder": "tieng_viet",
+    "filename": "CV NGUYENMINHDAT.pdf",
+    "ground_truth": "PUBLIC-RELATIONS",
+    "prediction": "DIGITAL-MEDIA",
+    "confidence": 84.76,
+    "correct": false
+  }
+]

@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Tổng quan hệ thống sàng lọc CV{% endblock %}
+
+{% block content %}
+<!-- ── Stat cards ─────────────────────────────────────────────────────────────── -->
+<div class="grid grid-cols-4 gap-5 mb-7">
+  <!-- Total CV -->
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Tổng CV đã xử lý</p>
+        <p class="text-3xl font-bold text-slate-900 mt-1">{{ stats.total }}</p>
+        <p class="text-xs text-slate-400 mt-1">Toàn bộ lịch sử</p>
+      </div>
+      <div class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Đạt -->
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">CV Đạt yêu cầu</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">{{ stats.passed }}</p>
+        <p class="text-xs text-green-600 mt-1 font-medium">{{ stats.pass_rate }}% tỷ lệ đạt</p>
+      </div>
+      <div class="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job hiện tại -->
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Job đang tuyển</p>
+        <p class="text-lg font-bold text-slate-900 mt-1 leading-tight">
+          {% if current_job %}{{ current_job.job_title }}{% else %}Chưa cấu hình{% endif %}
+        </p>
+        <p class="text-xs text-slate-400 mt-1">
+          {% if current_job %}{{ current_job.required_skills | length }} kỹ năng bắt buộc{% else %}Tạo job trước{% endif %}
+        </p>
+      </div>
+      <div class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model F1 -->
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Độ chính xác Model</p>
+        <p class="text-3xl font-bold text-slate-900 mt-1">
+          {% if model_info %}{{ "%.1f"|format(model_info.val_f1 * 100) }}%{% else %}—{% endif %}
+        </p>
+        <p class="text-xs mt-1 {% if model_ready %}text-green-600{% else %}text-red-500{% endif %} font-medium">
+          {% if model_ready %}Model sẵn sàng{% else %}Chưa có model{% endif %}
+        </p>
+      </div>
+      <div class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts ─────────────────────────────────────────────────────────────────── -->
+<div class="grid grid-cols-2 gap-5 mb-7">
+  <!-- Bar chart: CV theo ngành -->
+  <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-slate-900">CV đã xử lý theo ngành</h3>
+    </div>
+    {% if stats.by_category %}
+    <canvas id="catChart" height="220"></canvas>
+    {% else %}
+    <div class="flex items-center justify-center h-40 text-slate-400 text-sm">
+      Chưa có dữ liệu. Upload CV để bắt đầu.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Doughnut: Tỷ lệ ĐẠT/LOẠI -->
+  <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+    <h3 class="font-semibold text-slate-900 mb-5">Phân bố kết quả</h3>
+    {% if stats.total > 0 %}
+    <div class="flex items-center gap-6">
+      <canvas id="resultChart" width="160" height="160" class="flex-shrink-0"></canvas>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <div class="w-3 h-3 rounded-full bg-green-500"></div>
+          <div>
+            <p class="text-sm font-medium text-slate-900">Đạt</p>
+            <p class="text-xs text-slate-500">{{ stats.passed }} CV · {{ stats.pass_rate }}%</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-3 h-3 rounded-full bg-red-400"></div>
+          <div>
+            <p class="text-sm font-medium text-slate-900">Loại</p>
+            <p class="text-xs text-slate-500">{{ stats.failed }} CV · {{ "%.1f"|format(100 - stats.pass_rate) }}%</p>
+          </div>
+        </div>
+        <!-- Hoạt động gần đây -->
+        <div class="mt-4 pt-4 border-t border-slate-100">
+          <p class="text-xs font-semibold text-slate-500 mb-2">Hoạt động gần đây</p>
+          {% for r in recent_activity %}
+          <div class="flex items-center gap-2 py-1">
+            <span class="w-2 h-2 rounded-full flex-shrink-0
+              {% if r.status == 'ĐẠT' %}bg-green-400{% else %}bg-red-400{% endif %}"></span>
+            <p class="text-xs text-slate-600 truncate">{{ r.filename }}</p>
+            <span class="text-xs {% if r.status == 'ĐẠT' %}text-green-600{% else %}text-red-500{% endif %} ml-auto flex-shrink-0 font-medium">
+              {{ r.status }}
+            </span>
+          </div>
+          {% else %}
+          <p class="text-xs text-slate-400">Chưa có hoạt động.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="flex items-center justify-center h-40 text-slate-400 text-sm">
+      Chưa có dữ liệu.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── Quick actions ──────────────────────────────────────────────────────────── -->
+<div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+  <h3 class="font-semibold text-slate-900 mb-4">Bắt đầu nhanh</h3>
+  <div class="flex gap-4">
+    <a href="/jobs/new"
+       class="flex-1 flex items-center gap-3 p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer group">
+      <div class="w-10 h-10 bg-slate-100 group-hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-900">Tạo Job mới</p>
+        <p class="text-xs text-slate-500">Chọn vị trí & cấu hình tiêu chí</p>
+      </div>
+    </a>
+    <a href="/upload"
+       class="flex-1 flex items-center gap-3 p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer group">
+      <div class="w-10 h-10 bg-slate-100 group-hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-900">Upload CV</p>
+        <p class="text-xs text-slate-500">Kéo thả file PDF để sàng lọc</p>
+      </div>
+    </a>
+    <a href="/results"
+       class="flex-1 flex items-center gap-3 p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer group">
+      <div class="w-10 h-10 bg-slate-100 group-hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-900">Xem kết quả</p>
+        <p class="text-xs text-slate-500">Danh sách CV đã sàng lọc</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+<script>
+const catData = {{ stats.by_category | tojson }};
+const labels  = Object.keys(catData);
+const values  = Object.values(catData);
+
+if (labels.length > 0) {
+  new Chart(document.getElementById('catChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: '#1e293b',
+        hoverBackgroundColor: '#475569',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+{% if stats.total > 0 %}
+new Chart(document.getElementById('resultChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Đạt', 'Loại'],
+    datasets: [{
+      data: [{{ stats.passed }}, {{ stats.failed }}],
+      backgroundColor: ['#22c55e', '#f87171'],
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: false,
+    cutout: '68%',
+    plugins: { legend: { display: false } }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

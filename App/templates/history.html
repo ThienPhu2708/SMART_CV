@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Lịch sử{% endblock %}
+{% block page_title %}Lịch sử Sàng lọc{% endblock %}
+{% block page_subtitle %}Toàn bộ các đợt sàng lọc CV đã thực hiện{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="grid grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 mb-1">Tổng CV</p>
+    <p class="text-2xl font-bold text-slate-900">{{ stats.total }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 mb-1">Đạt yêu cầu</p>
+    <p class="text-2xl font-bold text-green-600">{{ stats.passed }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 mb-1">Bị loại</p>
+    <p class="text-2xl font-bold text-red-500">{{ stats.failed }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 mb-1">Tỷ lệ đạt</p>
+    <p class="text-2xl font-bold text-slate-900">{{ stats.pass_rate }}%</p>
+  </div>
+</div>
+
+<!-- Charts row -->
+{% if stats.total > 0 %}
+<div class="grid grid-cols-2 gap-5 mb-6">
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <h3 class="font-semibold text-slate-900 mb-4">Phân bố kết quả</h3>
+    <canvas id="histDoughnut" width="180" height="180" class="mx-auto block"></canvas>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <h3 class="font-semibold text-slate-900 mb-4">CV theo ngành nghề</h3>
+    <canvas id="histBar" height="180"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<!-- History table -->
+<div x-data="{ search: '' }" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+    <h3 class="font-semibold text-slate-900">Chi tiết từng hồ sơ</h3>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input x-model="search" type="text" placeholder="Tìm kiếm..."
+               class="pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 w-44" />
+      </div>
+      <button onclick="exportHistoryCSV()"
+              class="px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-700 hover:bg-slate-50 transition-colors">
+        Export CSV
+      </button>
+      <button onclick="clearHistory()"
+              class="px-3 py-2 border border-red-200 rounded-lg text-xs text-red-600 hover:bg-red-50 transition-colors">
+        Xóa lịch sử
+      </button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs text-slate-500 uppercase border-b border-slate-200">
+        <tr>
+          <th class="px-5 py-3 text-left">Thời gian</th>
+          <th class="px-5 py-3 text-left">File CV</th>
+          <th class="px-5 py-3 text-left">Vị trí</th>
+          <th class="px-5 py-3 text-left">Ngành</th>
+          <th class="px-5 py-3 text-center">Tin cậy</th>
+          <th class="px-5 py-3 text-center">Kết quả</th>
+          <th class="px-5 py-3 text-center">Chi tiết</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in history %}
+        <tr x-show="!search || '{{ r.filename }}'.toLowerCase().includes(search.toLowerCase()) || '{{ r.job_title }}'.toLowerCase().includes(search.toLowerCase())"
+            class="hover:bg-slate-50 transition-colors">
+          <td class="px-5 py-3 text-xs text-slate-500 whitespace-nowrap">{{ r.timestamp }}</td>
+          <td class="px-5 py-3">
+            <p class="text-sm font-medium text-slate-900 truncate max-w-[180px]">{{ r.filename }}</p>
+          </td>
+          <td class="px-5 py-3 text-xs text-slate-600">{{ r.job_title }}</td>
+          <td class="px-5 py-3 text-xs text-slate-600">{{ r.category or '—' }}</td>
+          <td class="px-5 py-3 text-center text-sm font-semibold text-slate-900">
+            {{ "%.1f"|format(r.confidence) }}%
+          </td>
+          <td class="px-5 py-3 text-center">
+            <span class="text-xs px-2.5 py-0.5 rounded-full border font-medium
+              {% if r.status == 'ĐẠT' %}bg-green-50 text-green-700 border-green-200
+              {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-center">
+            {% if r.id %}
+            <a href="/candidates/{{ r.id }}" class="text-xs text-slate-500 hover:text-slate-900 underline">Xem</a>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-5 py-10 text-center text-slate-400 text-sm">Chưa có lịch sử nào.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const HIST = {{ history | tojson }};
+const CAT_DATA = {{ stats.by_category | tojson }};
+
+{% if stats.total > 0 %}
+new Chart(document.getElementById('histDoughnut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Đạt', 'Loại'],
+    datasets: [{ data: [{{ stats.passed }}, {{ stats.failed }}], backgroundColor: ['#22c55e','#f87171'], borderWidth: 0 }]
+  },
+  options: { responsive: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } } }
+});
+
+new Chart(document.getElementById('histBar'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(CAT_DATA),
+    datasets: [{ data: Object.values(CAT_DATA), backgroundColor: '#1e293b', hoverBackgroundColor: '#475569', borderRadius: 4 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } }, x: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+});
+{% endif %}
+
+function exportHistoryCSV() {
+  const rows = [['Thời gian','File','Vị trí','Ngành','Tin cậy (%)','Kết quả','Lý do']];
+  HIST.forEach(r => rows.push([r.timestamp, r.filename, r.job_title, r.category, r.confidence, r.status, r.reason]));
+  const csv = rows.map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+  a.download = 'smartcv_history.csv';
+  a.click();
+}
+
+async function clearHistory() {
+  if (!confirm('Xóa toàn bộ lịch sử? Hành động này không thể hoàn tác.')) return;
+  const res = await fetch('/api/clear-history', { method: 'POST' });
+  if (res.ok) { showToast('Đã xóa lịch sử!', 'success'); setTimeout(() => location.reload(), 800); }
+}
+</script>
+{% endblock %}

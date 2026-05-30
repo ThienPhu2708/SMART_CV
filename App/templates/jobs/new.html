@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}Tạo Job{% endblock %}
+{% block page_title %}Tạo Job mới{% endblock %}
+{% block page_subtitle %}Chọn vị trí tuyển dụng và cấu hình tiêu chí Logic Gates{% endblock %}
+
+{% block content %}
+<div x-data="jobBuilder()" x-init="init()">
+
+  <div class="grid grid-cols-2 gap-6">
+    <!-- ── Cột trái: Thông tin cơ bản ─────────────────────────────────────────── -->
+    <div class="space-y-5">
+
+      <!-- Chọn ngành -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="font-semibold text-slate-900 mb-4">Chọn vị trí tuyển dụng</h3>
+        <div class="grid grid-cols-2 gap-3">
+          {% for key, tpl in job_templates.items() %}
+          <button type="button"
+                  @click="selectTemplate('{{ key }}')"
+                  :class="selectedKey === '{{ key }}'
+                    ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900'
+                    : 'border-slate-200 hover:border-slate-400'"
+                  class="flex items-start gap-3 p-3 border-2 rounded-lg text-left transition-all">
+            <span class="text-xl">{{ tpl.icon }}</span>
+            <div>
+              <p class="text-sm font-semibold text-slate-900 leading-tight">{{ tpl.display }}</p>
+              <p class="text-xs text-slate-400 mt-0.5">{{ tpl.description }}</p>
+            </div>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Required skills (AND Gate) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+          <h3 class="font-semibold text-slate-900">AND Gate — Kỹ năng Bắt buộc</h3>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+          <template x-for="(skill, i) in requiredSkills" :key="i">
+            <span class="chip-required inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+              <span x-text="skill"></span>
+              <button @click="requiredSkills.splice(i, 1)" class="hover:text-red-900">×</button>
+            </span>
+          </template>
+          <span x-show="requiredSkills.length === 0" class="text-xs text-slate-400">Chưa có kỹ năng nào.</span>
+        </div>
+        <div class="flex gap-2">
+          <input x-model="newRequired" @keydown.enter.prevent="addSkill('required')"
+                 type="text" placeholder="Nhập kỹ năng và nhấn Enter..."
+                 class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent" />
+          <button @click="addSkill('required')"
+                  class="px-3 py-2 bg-slate-900 text-white text-sm rounded-lg hover:bg-slate-700 transition-colors">+ Thêm</button>
+        </div>
+      </div>
+
+      <!-- Optional skills (OR Gate) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+          <h3 class="font-semibold text-slate-900">OR Gate — Kỹ năng Ưu tiên</h3>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+          <template x-for="(skill, i) in optionalSkills" :key="i">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+              <span x-text="skill"></span>
+              <button @click="optionalSkills.splice(i, 1)" class="hover:text-yellow-900">×</button>
+            </span>
+          </template>
+          <span x-show="optionalSkills.length === 0" class="text-xs text-slate-400">Chưa có kỹ năng nào.</span>
+        </div>
+        <div class="flex gap-2">
+          <input x-model="newOptional" @keydown.enter.prevent="addSkill('optional')"
+                 type="text" placeholder="Nhập kỹ năng và nhấn Enter..."
+                 class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent" />
+          <button @click="addSkill('optional')"
+                  class="px-3 py-2 bg-slate-900 text-white text-sm rounded-lg hover:bg-slate-700 transition-colors">+ Thêm</button>
+        </div>
+      </div>
+
+      <!-- Blacklist (NOT Gate) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+          <h3 class="font-semibold text-slate-900">NOT Gate — Từ khóa Cấm</h3>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+          <template x-for="(word, i) in blacklist" :key="i">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+              <span x-text="word"></span>
+              <button @click="blacklist.splice(i, 1)" class="hover:text-purple-900">×</button>
+            </span>
+          </template>
+          <span x-show="blacklist.length === 0" class="text-xs text-slate-400">Chưa có từ cấm nào.</span>
+        </div>
+        <div class="flex gap-2">
+          <input x-model="newBlacklist" @keydown.enter.prevent="addSkill('blacklist')"
+                 type="text" placeholder="Từ khóa cấm..."
+                 class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent" />
+          <button @click="addSkill('blacklist')"
+                  class="px-3 py-2 bg-slate-900 text-white text-sm rounded-lg hover:bg-slate-700 transition-colors">+ Thêm</button>
+        </div>
+      </div>
+
+      <!-- XOR Gate -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          <h3 class="font-semibold text-slate-900">XOR Gate — Cặp kỹ năng Độc quyền</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">CV có đúng MỘT trong hai kỹ năng này mới được chấp nhận.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Kỹ năng A</label>
+            <input x-model="xorA" type="text" placeholder="Ví dụ: PyTorch"
+                   class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Kỹ năng B</label>
+            <input x-model="xorB" type="text" placeholder="Ví dụ: TensorFlow"
+                   class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Cột phải: Preview & Summary ────────────────────────────────────────── -->
+    <div class="space-y-5">
+
+      <!-- Logic summary -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="font-semibold text-slate-900 mb-4">Tổng kết Logic Gates</h3>
+
+        <div class="space-y-3">
+          <!-- AND -->
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
+            <span class="mt-0.5 w-6 h-6 rounded flex-shrink-0 bg-red-600 text-white text-xs flex items-center justify-center font-bold">AND</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-red-800">Bắt buộc có TẤT CẢ</p>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <template x-for="s in requiredSkills" :key="s">
+                  <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded" x-text="s"></span>
+                </template>
+                <span x-show="requiredSkills.length === 0" class="text-xs text-red-400">Chưa có</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- OR -->
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-100">
+            <span class="mt-0.5 w-6 h-6 rounded flex-shrink-0 bg-yellow-500 text-white text-xs flex items-center justify-center font-bold">OR</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-yellow-800">Có ÍT NHẤT một trong</p>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <template x-for="s in optionalSkills" :key="s">
+                  <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded" x-text="s"></span>
+                </template>
+                <span x-show="optionalSkills.length === 0" class="text-xs text-yellow-500">Chưa có (bỏ qua)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOT -->
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-purple-50 border border-purple-100">
+            <span class="mt-0.5 w-6 h-6 rounded flex-shrink-0 bg-purple-600 text-white text-xs flex items-center justify-center font-bold">NOT</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-purple-800">KHÔNG được chứa</p>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <template x-for="s in blacklist" :key="s">
+                  <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded" x-text="s"></span>
+                </template>
+                <span x-show="blacklist.length === 0" class="text-xs text-purple-400">Chưa có (bỏ qua)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- XOR -->
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+            <span class="mt-0.5 w-6 h-6 rounded flex-shrink-0 bg-blue-600 text-white text-xs flex items-center justify-center font-bold">XOR</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-blue-800">Đúng MỘT trong hai</p>
+              <p class="text-xs text-blue-600 mt-1">
+                <span x-text="xorA || '—'"></span>
+                <span class="mx-1 text-blue-400">⊕</span>
+                <span x-text="xorB || '—'"></span>
+                <span x-show="!xorA && !xorB" class="text-blue-400">(bỏ qua)</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview rule -->
+        <div class="mt-4 p-3 bg-slate-900 rounded-lg">
+          <p class="text-xs text-slate-400 mb-1">Rule preview:</p>
+          <p class="text-xs text-green-400 font-mono" x-text="previewRule()"></p>
+        </div>
+      </div>
+
+      <!-- Job info card (nếu đã chọn template) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm" x-show="selectedKey">
+        <h3 class="font-semibold text-slate-900 mb-3">Vị trí đã chọn</h3>
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+          <span class="text-2xl" x-text="selectedTemplate.icon"></span>
+          <div>
+            <p class="font-semibold text-slate-900 text-sm" x-text="selectedTemplate.display"></p>
+            <p class="text-xs text-slate-500" x-text="selectedTemplate.description"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hướng dẫn -->
+      <div class="bg-slate-50 rounded-xl border border-slate-200 p-5">
+        <h4 class="text-sm font-semibold text-slate-700 mb-3">Cách hoạt động</h4>
+        <ul class="space-y-2 text-xs text-slate-500">
+          <li class="flex gap-2"><span class="text-red-500 font-bold">AND:</span> Bắt buộc phải có TẤT CẢ kỹ năng này. Thiếu 1 = LOẠI.</li>
+          <li class="flex gap-2"><span class="text-yellow-500 font-bold">OR:</span> Cần ít nhất 1 kỹ năng ưu tiên (không bắt buộc).</li>
+          <li class="flex gap-2"><span class="text-purple-500 font-bold">NOT:</span> Tự động loại nếu CV chứa từ này.</li>
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">XOR:</span> Chấp nhận có ĐúNG MỘT trong 2 kỹ năng.</li>
+        </ul>
+        <p class="text-xs text-slate-400 mt-3">⚠️ Logic Gates là bộ lọc sơ bộ. MLP AI vẫn luôn chạy để phân loại ngành.</p>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3">
+        <a href="/" class="flex-1 px-4 py-3 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors text-center">
+          Hủy
+        </a>
+        <button @click="saveJob()" :disabled="!selectedKey || saving"
+                class="flex-1 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+          <svg x-show="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span x-text="saving ? 'Đang lưu...' : 'Lưu & Áp dụng'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const JOB_TEMPLATES = {{ job_templates | tojson }};
+const CURRENT_JOB   = {{ current_job | tojson if current_job else 'null' }};
+
+function jobBuilder() {
+  return {
+    selectedKey:      CURRENT_JOB?.job_key || '',
+    selectedTemplate: CURRENT_JOB ? (JOB_TEMPLATES[CURRENT_JOB.job_key] || {}) : {},
+    requiredSkills:   CURRENT_JOB?.required_skills  || [],
+    optionalSkills:   CURRENT_JOB?.optional_skills  || [],
+    blacklist:        CURRENT_JOB?.blacklist         || [],
+    xorA:             CURRENT_JOB?.exclusive_pair?.[0] || '',
+    xorB:             CURRENT_JOB?.exclusive_pair?.[1] || '',
+    newRequired:  '',
+    newOptional:  '',
+    newBlacklist: '',
+    saving:       false,
+
+    init() {},
+
+    selectTemplate(key) {
+      const tpl = JOB_TEMPLATES[key];
+      if (!tpl) return;
+      this.selectedKey      = key;
+      this.selectedTemplate = tpl;
+      this.requiredSkills   = [...tpl.required];
+      this.optionalSkills   = [...tpl.optional];
+      this.blacklist        = [];
+      this.xorA = ''; this.xorB = '';
+    },
+
+    addSkill(type) {
+      const map = { required: 'newRequired', optional: 'newOptional', blacklist: 'newBlacklist' };
+      const listMap = { required: 'requiredSkills', optional: 'optionalSkills', blacklist: 'blacklist' };
+      const val = this[map[type]].trim().toLowerCase();
+      if (val && !this[listMap[type]].includes(val)) {
+        this[listMap[type]].push(val);
+      }
+      this[map[type]] = '';
+    },
+
+    previewRule() {
+      const parts = [];
+      if (this.requiredSkills.length) parts.push(this.requiredSkills.join(' AND '));
+      if (this.optionalSkills.length) parts.push(`(${this.optionalSkills.join(' OR ')})`);
+      if (this.blacklist.length) parts.push(`NOT (${this.blacklist.join(', ')})`);
+      if (this.xorA && this.xorB) parts.push(`(${this.xorA} XOR ${this.xorB})`);
+      return parts.length ? parts.join(' → ') : 'Chưa có rule nào';
+    },
+
+    async saveJob() {
+      if (!this.selectedKey) return;
+      this.saving = true;
+      try {
+        const xpair = (this.xorA.trim() && this.xorB.trim())
+          ? [this.xorA.trim(), this.xorB.trim()] : [];
+        const res = await fetch('/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            job_key:        this.selectedKey,
+            required_skills: this.requiredSkills,
+            optional_skills: this.optionalSkills,
+            blacklist:       this.blacklist,
+            exclusive_pair:  xpair,
+          })
+        });
+        if (res.ok) {
+          showToast('Đã lưu cấu hình job!', 'success');
+          setTimeout(() => window.location.href = '/upload', 800);
+        } else {
+          showToast('Lưu thất bại!', 'error');
+        }
+      } catch(e) {
+        showToast('Lỗi kết nối!', 'error');
+      } finally {
+        this.saving = false;
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

@@ -23,6 +23,9 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")
 
 import os
+import json
+import shutil
+from datetime import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -35,10 +38,11 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import (
-    accuracy_score, classification_report, f1_score, confusion_matrix
+    accuracy_score, classification_report, f1_score, confusion_matrix,
+    precision_score, recall_score, roc_curve, auc,
 )
+from sklearn.preprocessing import label_binarize
 from sklearn.utils.class_weight import compute_class_weight
-from imblearn.over_sampling import SMOTE
 
 from SRC.model_mlp import SmartCV_MLP
 
@@ -46,17 +50,85 @@ from SRC.model_mlp import SmartCV_MLP
 EPOCHS          = 150
 BATCH_SIZE      = 64
 LEARNING_RATE   = 0.001
-PATIENCE        = 12       # early stopping: dừng nếu Val F1 không tăng sau N epoch
+PATIENCE        = 8        # giảm 12→8: dừng sớm hơn, tránh train acc tiếp tục lên 99%
 LABEL_SMOOTHING = 0.1      # giảm overconfidence của model
 GRAD_CLIP       = 1.0      # gradient clipping — ổn định training
 WEIGHT_DECAY    = 1e-3     # tăng L2 regularization để chống overfit
-SMOTE_MAX       = 180      # giới hạn mẫu SMOTE mỗi class (không oversample quá mức)
 
 
 # ── Dataset helper ─────────────────────────────────────────────────────────────
+def get_probabilities(model, loader, device):
+    """Trả về ma trận xác suất softmax và nhãn thực cho toàn bộ loader."""
+    model.eval()
+    all_probs, all_labels = [], []
+    with torch.no_grad():
+        for X_batch, y_batch in loader:
+            X_batch = X_batch.to(device)
+            probs = torch.nn.functional.softmax(model(X_batch), dim=1)
+            all_probs.append(probs.cpu().numpy())
+            all_labels.extend(y_batch.numpy())
+    return np.vstack(all_probs), np.array(all_labels)
+
+
 def make_loader(X, y, batch_size, shuffle=True):
     ds = TensorDataset(torch.tensor(X).float(), torch.tensor(y).long())
     return DataLoader(ds, batch_size=batch_size, shuffle=shuffle)
+
+
+# ── Checkpoint Manager ────────────────────────────────────────────────────────
+CKPT_DIR   = "Models/checkpoints"
+CKPT_LOG   = "Models/checkpoints/log.json"
+MAX_CKPTS  = 5   # giữ tối đa 5 checkpoint tốt nhất
+
+def save_checkpoint(model, epoch, val_f1, val_acc):
+    """Lưu model khi đạt Val F1 mới tốt nhất, giữ tối đa MAX_CKPTS phiên bản."""
+    os.makedirs(CKPT_DIR, exist_ok=True)
+
+    ts   = datetime.now().strftime("%m%d_%H%M%S")
+    name = f"ckpt_ep{epoch:03d}_f1{val_f1*100:.1f}_acc{val_acc*100:.1f}_{ts}.pth"
+    path = os.path.join(CKPT_DIR, name)
+    torch.save(model.state_dict(), path)
+
+    # Cập nhật log
+    log = []
+    if os.path.exists(CKPT_LOG):
+        with open(CKPT_LOG, "r", encoding="utf-8") as f:
+            log = json.load(f)
+    log.append({"file": name, "epoch": epoch,
+                 "val_f1": round(val_f1 * 100, 2),
+                 "val_acc": round(val_acc * 100, 2),
+                 "time": ts})
+    log.sort(key=lambda x: x["val_f1"], reverse=True)
+
+    # Xóa checkpoint cũ vượt quá MAX_CKPTS
+    for old in log[MAX_CKPTS:]:
+        old_path = os.path.join(CKPT_DIR, old["file"])
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    log = log[:MAX_CKPTS]
+
+    with open(CKPT_LOG, "w", encoding="utf-8") as f:
+        json.dump(log, f, ensure_ascii=False, indent=2)
+
+    return path
+
+
+def list_checkpoints():
+    """In danh sách các checkpoint đã lưu, sắp xếp theo Val F1 giảm dần."""
+    if not os.path.exists(CKPT_LOG):
+        print("Chưa có checkpoint nào.")
+        return
+    with open(CKPT_LOG, "r", encoding="utf-8") as f:
+        log = json.load(f)
+    print(f"\n{'='*65}")
+    print(f"{'#':<4} {'Val F1':>8} {'Val Acc':>8} {'Epoch':>6}  File")
+    print(f"{'='*65}")
+    for i, ck in enumerate(log):
+        marker = " ← BEST" if i == 0 else ""
+        print(f"{i+1:<4} {ck['val_f1']:>7.1f}% {ck['val_acc']:>7.1f}% "
+              f"{ck['epoch']:>6}  {ck['file']}{marker}")
+    print(f"{'='*65}")
+    print(f"Để khôi phục checkpoint bất kỳ: xem Models/checkpoints/")
 
 
 # ── Vẽ Learning Curves ────────────────────────────────────────────────────────
@@ -119,6 +191,69 @@ def plot_confusion_matrix(y_true, y_pred, class_names, save_path):
     print(f"Đã lưu confusion matrix: {save_path}")
 
 
+# ── Biểu đồ Precision / Recall / F1 theo từng lớp ────────────────────────────
+def plot_per_class_metrics(y_true, y_pred, class_names, save_path):
+    p = precision_score(y_true, y_pred, average=None, zero_division=0) * 100
+    r = recall_score(y_true, y_pred, average=None, zero_division=0) * 100
+    f = f1_score(y_true, y_pred, average=None, zero_division=0) * 100
+
+    n = len(class_names)
+    x = np.arange(n)
+    w = 0.26
+
+    fig, ax = plt.subplots(figsize=(max(10, n * 1.5), 5))
+    ax.bar(x - w, p, w, label="Precision", color="#1f77b4", alpha=0.88)
+    ax.bar(x,     r, w, label="Recall",    color="#ff7f0e", alpha=0.88)
+    ax.bar(x + w, f, w, label="F1-Score",  color="#2ca02c", alpha=0.88)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(class_names, rotation=30, ha="right", fontsize=9)
+    ax.set_ylabel("Score (%)")
+    ax.set_ylim(0, 118)
+    ax.set_title("Precision / Recall / F1 theo từng ngành — Test Set", fontsize=12)
+    ax.legend(fontsize=9)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+
+    for xi, (pi, ri, fi) in enumerate(zip(p, r, f)):
+        ax.text(xi - w, pi + 1, f"{pi:.0f}", ha="center", fontsize=7, color="#1f77b4")
+        ax.text(xi,     ri + 1, f"{ri:.0f}", ha="center", fontsize=7, color="#ff7f0e")
+        ax.text(xi + w, fi + 1, f"{fi:.0f}", ha="center", fontsize=7, color="#2ca02c")
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150)
+    plt.close(fig)
+    print(f"Đã lưu per-class metrics: {save_path}")
+
+
+# ── Biểu đồ ROC Curves (One-vs-Rest) ─────────────────────────────────────────
+def plot_roc_curves(y_probs, y_true, class_names, save_path):
+    n_classes = len(class_names)
+    y_bin = label_binarize(y_true, classes=np.arange(n_classes))
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    colors = plt.cm.tab10(np.linspace(0, 1, n_classes))
+
+    for i, (name, color) in enumerate(zip(class_names, colors)):
+        fpr, tpr, _ = roc_curve(y_bin[:, i], y_probs[:, i])
+        roc_auc = auc(fpr, tpr)
+        ax.plot(fpr, tpr, color=color, lw=1.8,
+                label=f"{name} (AUC={roc_auc:.2f})")
+
+    ax.plot([0, 1], [0, 1], "k--", lw=1, alpha=0.4)
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel("False Positive Rate", fontsize=10)
+    ax.set_ylabel("True Positive Rate", fontsize=10)
+    ax.set_title("ROC Curves — One-vs-Rest (Test Set)", fontsize=12)
+    ax.legend(loc="lower right", fontsize=8)
+    ax.grid(alpha=0.3, linestyle="--")
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150)
+    plt.close(fig)
+    print(f"Đã lưu ROC curves: {save_path}")
+
+
 # ── Đánh giá một epoch ────────────────────────────────────────────────────────
 def evaluate(model, loader, criterion, device):
     model.eval()
@@ -168,7 +303,7 @@ def train_model():
     print(f"Số ngành nghề: {num_classes}")
 
     # Kiểm tra phân bố lớp
-    unique, counts = np.unique(y, return_counts=True)
+    _, counts = np.unique(y, return_counts=True)
     min_count = counts.min()
     print(f"Lớp ít nhất: {le.classes_[counts.argmin()]} ({min_count} mẫu)")
     print(f"Lớp nhiều nhất: {le.classes_[counts.argmax()]} ({counts.max()} mẫu)")
@@ -185,45 +320,17 @@ def train_model():
     print(f"  Val   : {len(X_val):5d} mẫu ({len(X_val)/len(X)*100:.1f}%)")
     print(f"  Test  : {len(X_test):5d} mẫu ({len(X_test)/len(X)*100:.1f}%)")
 
-    # ── 4. SMOTE CHỈ trên Train — tránh data leakage ─────────────────────────
-    # Giới hạn mỗi class tối đa SMOTE_MAX mẫu để không oversample quá mức
-    train_unique, train_counts = np.unique(y_train, return_counts=True)
-    min_train_count = train_counts.min()
-    k_neighbors = min(5, min_train_count - 1)
-
-    # sampling_strategy: chỉ upsample các class có < SMOTE_MAX mẫu, lên đúng SMOTE_MAX
-    smote_target = {
-        int(cls): SMOTE_MAX
-        for cls, count in zip(train_unique, train_counts)
-        if count < SMOTE_MAX
-    }
-
-    if k_neighbors < 1:
-        print(f"\nCảnh báo: Lớp thiểu số quá ít mẫu ({min_train_count}). Bỏ qua SMOTE.")
-        X_train_res, y_train_res = X_train, y_train
-    elif not smote_target:
-        print(f"\nTất cả class đã >= {SMOTE_MAX} mẫu. Bỏ qua SMOTE.")
-        X_train_res, y_train_res = X_train, y_train
-    else:
-        print(f"\nSMOTE: k_neighbors={k_neighbors}, target mỗi class = {SMOTE_MAX} mẫu tối đa")
-        print(f"Trước SMOTE: {len(X_train)} mẫu train")
-        try:
-            smote = SMOTE(
-                k_neighbors=k_neighbors,
-                sampling_strategy=smote_target,
-                random_state=42
-            )
-            X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
-            print(f"Sau  SMOTE : {len(X_train_res)} mẫu train (Val/Test giữ nguyên)")
-        except Exception as e:
-            print(f"SMOTE thất bại ({e}), dùng dữ liệu gốc.")
-            X_train_res, y_train_res = X_train, y_train
+    # ── 4. Không dùng SMOTE — dùng class_weight trong Loss thay thế ──────────
+    # SMOTE tạo synthetic samples → train/val distribution lệch → gap train-val to
+    # class_weight="balanced" xử lý imbalanced data mà không làm lệch phân phối
+    X_train_res, y_train_res = X_train, y_train
+    print(f"\nKhông dùng SMOTE — class imbalance xử lý bằng class_weight trong Loss")
 
     # ── 5. Tính Class Weights cho Loss ───────────────────────────────────────
     class_weights = compute_class_weight(
         class_weight="balanced",
         classes=np.arange(num_classes),
-        y=y_train  # dùng y_train gốc (trước SMOTE) để tính weight thực tế
+        y=y_train,
     )
     weights_tensor = torch.tensor(class_weights, dtype=torch.float).to(device)
     print(f"\nClass weights (min={class_weights.min():.2f}, max={class_weights.max():.2f})")
@@ -302,12 +409,14 @@ def train_model():
                   f"| Val Loss: {val_loss:.4f}  Acc: {val_acc*100:.1f}%  F1: {val_f1*100:.1f}% "
                   f"| LR: {current_lr:.6f}")
 
-        # Lưu model tốt nhất theo Val Macro F1 (phù hợp imbalanced data)
+        # Lưu model tốt nhất theo Val Macro F1
         if val_f1 > best_val_f1:
             best_val_f1   = val_f1
             best_val_loss = val_loss
             epochs_no_imp = 0
             torch.save(model.state_dict(), "Models/smartcv_model.pth")
+            ckpt_path = save_checkpoint(model, epoch, val_f1, val_acc)
+            print(f"  ✓ New best! Val F1={val_f1*100:.2f}%  → saved: {os.path.basename(ckpt_path)}")
         else:
             epochs_no_imp += 1
 
@@ -351,9 +460,21 @@ def train_model():
     plot_confusion_matrix(y_true, y_pred, le.classes_,
                           "Models/confusion_matrix.png")
 
-    print(f"\nModel đã lưu       : Models/smartcv_model.pth")
-    print(f"Biểu đồ training   : Models/training_curves.png")
-    print(f"Confusion matrix   : Models/confusion_matrix.png")
+    # Per-class Precision / Recall / F1
+    plot_per_class_metrics(y_true, y_pred, le.classes_,
+                           "Models/per_class_metrics.png")
+
+    # ROC Curves (cần xác suất softmax)
+    y_probs, _ = get_probabilities(model, test_loader, device)
+    plot_roc_curves(y_probs, np.array(y_true), le.classes_,
+                    "Models/roc_curves.png")
+
+    print(f"\nModel tốt nhất         : Models/smartcv_model.pth")
+    print(f"Biểu đồ training       : Models/training_curves.png")
+    print(f"Confusion matrix       : Models/confusion_matrix.png")
+    print(f"Per-class metrics      : Models/per_class_metrics.png")
+    print(f"ROC curves             : Models/roc_curves.png")
+    list_checkpoints()
 
 
 if __name__ == "__main__":

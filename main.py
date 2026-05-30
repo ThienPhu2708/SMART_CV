@@ -6,9 +6,19 @@ from SRC.Processing.vectorizer import create_tfidf_vectors
 from SRC.logic_gates import check_keyword, logic_and
 
 # ── Cấu hình ──────────────────────────────────────────────────────────────────
-MERGED_CSV  = "Data/Raw/Resume_merged.csv"
+MERGED_CSV   = "Data/Raw/Resume_merged.csv"
 ORIGINAL_CSV = "Data/Raw/Resume.csv"
-MAX_NEW_PER_CLASS = 200   # tối đa mẫu mới (NF_*) thêm vào mỗi class
+MAX_NEW_PER_CLASS = 80    # cap NF/class: IT = 120 orig + 80 NF = 200, cân bằng với các ngành khác
+
+# Thu hẹp phạm vi: chỉ giữ ngành Công nghệ và Marketing/Kinh doanh
+SELECTED_CATEGORIES = [
+    "INFORMATION-TECHNOLOGY",
+    "BUSINESS-DEVELOPMENT",
+    "SALES",
+    "DIGITAL-MEDIA",
+    "PUBLIC-RELATIONS",
+    "CONSULTANT",
+]
 
 # =========================
 # LOAD & CÂN BẰNG DATASET
@@ -46,7 +56,11 @@ else:
 n_nf  = len(df_nf_bal) if "df_nf_bal" in dir() else 0
 n_orig = len(df_orig)
 print(f"Dataset loaded: {n_orig} goc + {n_nf} Neuralframe + {n_syn} synthetic = {len(df)} tong")
-print("Phan bo sau khi gop:")
+
+# Lọc chỉ giữ các ngành được chọn
+df = df[df["Category"].isin(SELECTED_CATEGORIES)]
+print(f"\nSau khi loc pham vi ({len(SELECTED_CATEGORIES)} nganh): {len(df)} mau")
+print("Phan bo sau khi gop va loc:")
 dist = df["Category"].value_counts()
 for cat, cnt in dist.items():
     print(f"  {cat:<25} {cnt}")

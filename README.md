@@ -1,45 +1,143 @@
-# SmartCV — Hệ thống Sàng lọc Hồ sơ Tự động
+# SmartCV — Hệ thống Đánh giá Ứng viên Đa tầng
 
-Dự án cuối kỳ môn Deep Learning — HUIT  
-Kết hợp **MLP Neural Network** + **Logic Gates** + **OCR** để phân loại và lọc CV ứng viên tự động.
+Đồ án môn Deep Learning — Trường Đại học Công nghiệp TP.HCM (HUIT)
+
+**Nhóm 14:**
+| Họ tên | MSSV |
+|---|---|
+| Phùng Dương Thiên Phú | 2001230673 |
+| Nguyễn Thị Minh Thư | 2001230959 |
+| Nguyễn Thị Mỷ Duyên | 2001230130 |
+
+**GVHD:** TS. Nguyễn Thanh Long
 
 ---
 
 ## Giới thiệu
 
-SmartCV là hệ thống sàng lọc hồ sơ (CV) thông minh dành cho bộ phận HR. Thay vì đọc từng CV thủ công, hệ thống tự động:
+SmartCV tự động hóa giai đoạn sơ loại hồ sơ tuyển dụng bằng kiến trúc **4 tầng** kết hợp BERT, MLP và Logic Gates:
 
-1. Trích xuất văn bản từ file PDF (kể cả CV scan/ảnh qua OCR)
-2. Dịch tự động nếu CV không phải tiếng Anh (hỗ trợ tiếng Việt và nhiều ngôn ngữ khác)
-3. Phân loại ngành nghề bằng mạng nơ-ron MLP
-4. Lọc ứng viên qua bộ Logic Gates tùy chỉnh (AND / OR / NOT / XOR)
-5. Hiển thị kết quả và biểu đồ trực quan qua giao diện Streamlit
+```
+Tầng 1 — Trích xuất     PDF / JPG / PNG  →  pdfplumber → PyPDF2 → EasyOCR (fallback scan)
+Tầng 2 — BERT Encoder   văn bản          →  paraphrase-multilingual-MiniLM-L12-v2  →  384-dim
+Tầng 3 — MLP Head       384-dim          →  256 → 128 → 6 ngành  →  Softmax confidence%
+Tầng 4 — Logic Gates    AND / OR / NOT / XOR  →  ĐẠT / LOẠI
+```
+
+Hệ thống đọc được PDF có text, PDF scan, ảnh JPG/PNG, và CV tiếng Việt (tự động dịch sang tiếng Anh trước khi xử lý).
 
 ---
 
-## Kiến trúc hệ thống
+## Kết quả mô hình
+
+### So sánh hai phương pháp (cùng tập Test 15%)
+
+| Chỉ số | MLP Baseline (TF-IDF) | BERT + MLP (chính thức) | Cải thiện |
+|---|---|---|---|
+| Val Accuracy | 87.71% | **91.62%** | +3.91% |
+| Val Macro F1 | 87.73% | **91.54%** | +3.81% |
+| Test Accuracy | 85.56% | **88.89%** | +3.33% |
+| Test Macro F1 | 85.67% | **88.44%** | +2.77% |
+| Overfit gap | ~13.4% ⚠ | **~2.1% ✓** | −11.3% |
+| Epoch thực tế | 17 | ~42 | — |
+
+### Đánh giá out-of-sample (60 CV thực tế, ngoài tập huấn luyện)
+
+| Ngành | Đúng / Tổng | Accuracy |
+|---|---|---|
+| BUSINESS-DEVELOPMENT | 10 / 10 | 100% |
+| INFORMATION-TECHNOLOGY | 9 / 10 | 90% |
+| DIGITAL-MEDIA | 9 / 10 | 90% |
+| PUBLIC-RELATIONS | 7 / 10 | 70% |
+| SALES | 6 / 10 | 60% |
+| CONSULTANT | 5 / 10 | 50% |
+| **Tổng** | **46 / 60** | **76.7%** |
+
+---
+
+## Cài đặt
+
+**Yêu cầu:** Python 3.10+, RAM ≥ 4GB (không cần GPU)
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Lần đầu chạy, BERT encoder (~120MB) được tải tự động từ Hugging Face.
+
+---
+
+## Chạy ứng dụng
+
+```powershell
+.\venv\Scripts\Activate.ps1
+python run_app.py
+# → http://localhost:8000
+```
+
+---
+
+## Huấn luyện lại model
+
+```powershell
+# Train BERT + MLP (pipeline chính thức) — ~15–30 phút CPU
+python train_bert.py
+
+# Train MLP Baseline TF-IDF (để so sánh — tùy chọn)
+python main.py
+python train.py
+
+# Đánh giá out-of-sample trên 60 CV thực tế
+python eval_test_cvs.py
+```
+
+> **Lưu ý:** Nếu chạy lại `main.py`, phải chạy lại `train.py` ngay sau.
+
+---
+
+## Dataset
+
+| Nguồn | Số mẫu | Ghi chú |
+|---|---|---|
+| Kaggle UpdatedResumeDataSet | 678 | CV tiếng Anh thực tế, lọc 6 ngành mục tiêu |
+| Neuralframe Dataset | 284 | Bổ sung tối đa 80 mẫu/ngành |
+| Synthetic (tự sinh) | 235 | Cân bằng ngành thiếu (DIGITAL-MEDIA, CONSULTANT) |
+| **Tổng** | **~1.197** | Tỉ lệ max/min = 1.03x — gần cân bằng tuyệt đối |
+
+**Phân chia:** 70% Train / 15% Val / 15% Test — Stratified Split, random seed 42
+
+**6 ngành:** `INFORMATION-TECHNOLOGY` · `BUSINESS-DEVELOPMENT` · `SALES` · `DIGITAL-MEDIA` · `PUBLIC-RELATIONS` · `CONSULTANT`
+
+---
+
+## Kiến trúc MLP Head (Tầng 3)
 
 ```
-PDF Upload
-    │
-    ▼
-[Extractor] ── pdfplumber / PyPDF2 / EasyOCR (fallback)
-    │
-    ▼
-[Translator] ── langdetect + Google Translate (nếu không phải tiếng Anh)
-    │
-    ▼
-[Cleaner / NLP] ── lowercase, remove noise, lemmatization (NLTK WordNet)
-    │
-    ├──► [Logic Gates] ── AND / OR / NOT / XOR  →  advisory filter
-    │
-    └──► [MLP Classifier] ── TF-IDF (800 features) → 256 → 128 → 64 → 24 classes
-              │
-              ▼
-         [Kết quả] ── Ngành nghề + Độ tin cậy + Trạng thái ĐẠT/LOẠI
+Input:   384-dim  ← vector từ BERT Encoder
+         ↓
+Layer 1: Linear(384 → 256) → BatchNorm1d → ReLU → Dropout(0.45)
+         ↓
+Layer 2: Linear(256 → 128) → BatchNorm1d → ReLU → Dropout(0.35)
+         ↓
+Output:  Linear(128 → 6)  → Softmax → confidence%
 ```
 
-> **Nguyên tắc thiết kế:** Logic Gates đóng vai trò cố vấn (advisory), MLP **luôn chạy** bất kể kết quả lọc. Nếu Logic Gate loại nhưng MLP nhận diện đúng ngành với độ tin cậy cao, hệ thống sẽ cảnh báo HR xem xét lại tiêu chí.
+**Hyperparameters:** AdamW (lr=2e-4, weight_decay=8e-3) · ReduceLROnPlateau · Early stopping patience=15 · LabelSmoothing=0.1
+
+---
+
+## Logic Gates (Tầng 4)
+
+| Gate | Điều kiện | Ví dụ |
+|---|---|---|
+| AND | Bắt buộc TẤT CẢ kỹ năng | Python AND SQL AND Docker |
+| OR | Ít nhất 1 kỹ năng trong danh sách | ReactJS OR VueJS OR Angular |
+| NOT | Loại nếu chứa từ khóa cấm | NOT "fresher" NOT "intern" |
+| XOR | Đúng 1 trong 2 điều kiện | Frontend XOR Backend |
+
+Logic là **advisory**: BERT+MLP luôn chạy, logic chỉ ra kết quả ĐẠT/LOẠI. Nếu LOẠI nhưng confidence ≥ 30% → cảnh báo HR xem xét thủ công.
 
 ---
 
@@ -47,170 +145,90 @@ PDF Upload
 
 ```
 SMART_CV/
-│
 ├── App/
-│   └── main_ui.py              # Giao diện Streamlit (6 trang)
-│
-├── Data/
-│   ├── Raw/
-│   │   ├── Resume.csv              # Dataset gốc (~2484 mẫu, 24 ngành)
-│   │   ├── neuralframe_resumes.csv # Dataset bổ sung (NF_ prefix)
-│   │   ├── synthetic_resumes.csv   # Dữ liệu tổng hợp (SYN_ prefix)
-│   │   └── Resume_merged.csv       # Dataset gộp (gốc + NF)
-│   ├── Processed/
-│   │   ├── cleaned_resume.csv      # Văn bản sau khi làm sạch NLP
-│   │   ├── resume_vectors.csv      # Vector TF-IDF
-│   │   ├── tfidf_vectorizer.pkl    # Vectorizer đã fit
-│   │   └── screening_history.json  # Lịch sử sàng lọc CV
-│   └── Test_CVs/                   # 24 CV mẫu PDF (1 CV/ngành)
-│
-├── Models/
-│   ├── smartcv_model.pth       # Trọng số MLP đã huấn luyện
-│   ├── classes.npy             # Danh sách 24 nhãn ngành
-│   ├── training_curves.png     # Biểu đồ Loss/Accuracy theo epoch
-│   └── confusion_matrix.png    # Ma trận nhầm lẫn trên tập test
+│   ├── api.py                    # FastAPI backend — tất cả routes
+│   ├── static/
+│   │   ├── css/app.css
+│   │   └── js/app.js
+│   └── templates/
+│       ├── base.html
+│       ├── dashboard.html
+│       ├── upload.html
+│       ├── results.html
+│       ├── candidate_detail.html
+│       ├── history.html
+│       ├── settings.html
+│       └── jobs/new.html
 │
 ├── SRC/
-│   ├── Processing/
-│   │   ├── extractor.py            # Trích xuất PDF + OCR (EasyOCR)
-│   │   ├── cleaner.py              # Làm sạch NLP + dịch ngôn ngữ
-│   │   ├── vectorizer.py           # TF-IDF vectorization
-│   │   ├── merge_datasets.py       # Gộp các dataset nguồn
-│   │   └── synthetic_generator.py  # Tạo dữ liệu tổng hợp
-│   ├── model_mlp.py            # Định nghĩa kiến trúc MLP
-│   └── logic_gates.py          # AND / OR / NOT / XOR gates
+│   ├── model_bert.py             # MLP head (384 → 256 → 128 → 6)
+│   ├── model_mlp.py              # MLP baseline (600 → 64 → 32 → 6)
+│   ├── logic_gates.py            # AND / OR / NOT / XOR evaluation
+│   └── Processing/
+│       ├── cleaner.py            # clean_text(), translate_if_needed(), _has_vietnamese()
+│       ├── vectorizer.py         # TF-IDF (baseline only)
+│       ├── extractor.py          # PDF / OCR extraction
+│       └── bert_encoder.py       # encode_texts(), encode_single()
 │
-├── main.py         # Tiền xử lý dữ liệu + TF-IDF (chạy trước train)
-├── train.py        # Huấn luyện MLP (SMOTE + Early Stopping)
-├── predict.py      # Pipeline dự đoán từ PDF (CLI)
-├── create_test_cvs.py  # Tạo 24 CV PDF mẫu để kiểm thử
-├── download_nltk.py    # Tải NLTK data (stopwords, wordnet)
+├── Models/
+│   ├── bert_classifier.pth       # Weights BERT + MLP (model chính thức)
+│   ├── bert_config.json          # Config + test metrics
+│   ├── smartcv_model.pth         # Weights MLP baseline
+│   ├── classes.npy               # Label encoder classes
+│   ├── bert_training_curves.png  # Training curves BERT + MLP
+│   ├── training_curves.png       # Training curves MLP baseline
+│   ├── confusion_matrix.png      # Confusion matrix (BERT + MLP)
+│   ├── per_class_metrics.png     # F1 / Precision / Recall từng ngành
+│   ├── roc_curves.png            # ROC curves 6 ngành
+│   └── test_evaluation/
+│       ├── test_results.csv
+│       ├── test_results.json
+│       └── test_evaluation_report.png
+│
+├── Data/
+│   ├── Processed/
+│   │   ├── cleaned_resume.csv
+│   │   ├── bert_embeddings.npy   # BERT embeddings cache (384-dim)
+│   │   ├── bert_labels.npy
+│   │   ├── tfidf_vectorizer.pkl
+│   │   ├── current_job.json      # Job đang tuyển dụng
+│   │   └── screening_history.json
+│   └── Test_CVs/
+│       ├── 6_nganh_chinh/        # 60 CV thực tế (10 CV × 6 ngành)
+│       │   ├── INFORMATION-TECHNOLOGY/
+│       │   ├── BUSINESS-DEVELOPMENT/
+│       │   ├── SALES/
+│       │   ├── DIGITAL-MEDIA/
+│       │   ├── PUBLIC-RELATIONS/
+│       │   └── CONSULTANT/
+│       ├── ocr_test/             # CV dạng ảnh scan
+│       ├── tieng_viet/           # CV tiếng Việt
+│       └── ngoai_he_thong/       # CV ngoài 6 ngành
+│
+├── train_bert.py                 # Train BERT + MLP (pipeline chính thức)
+├── train.py                      # Train MLP baseline (so sánh)
+├── main.py                       # Tiền xử lý + TF-IDF vectorize
+├── predict.py                    # CLI inference (4-layer pipeline)
+├── eval_test_cvs.py              # Đánh giá out-of-sample trên Test_CVs/
+├── run_app.py                    # Khởi động web app
 └── requirements.txt
 ```
 
----
-
-## Dataset
-
-| Nguồn | Ký hiệu | Số lượng | Ghi chú |
-|---|---|---|---|
-| Kaggle Resume Dataset | _(gốc)_ | ~2484 mẫu | 24 ngành nghề |
-| Neuralframe Resumes | `NF_` prefix | tối đa 200/ngành | Bổ sung ngành thiếu |
-| Synthetic Resumes | `SYN_` prefix | tự sinh | Cân bằng lớp thiểu số |
-
-**24 ngành nghề được hỗ trợ:**  
-Accountant, Advocate, Agriculture, Apparel, Arts, Automobile, Aviation, Banking, BPO, Business Development, Chef, Construction, Consultant, Designer, Digital Media, Engineering, Finance, Fitness, Healthcare, HR, Information Technology, Public Relations, Sales, Teacher
+> **Thêm CV test:** Bỏ file vào đúng subfolder trong `Test_CVs/6_nganh_chinh/`. Script `eval_test_cvs.py` tự nhận ground truth từ tên thư mục.
 
 ---
 
-## Kiến trúc MLP
+## Công nghệ
 
-```
-Input (TF-IDF, 800 features)
-    │
-    ├── Linear(800→256) → BatchNorm → ReLU → Dropout(0.6)
-    ├── Linear(256→128) → BatchNorm → ReLU → Dropout(0.5)
-    ├── Linear(128→64)  → BatchNorm → ReLU → Dropout(0.4)
-    └── Linear(64→24)   → CrossEntropyLoss
-```
-
-- **Optimizer:** Adam, lr=1e-3, weight_decay=1e-3
-- **Oversampling:** SMOTE (imblearn) trên tập train để cân bằng lớp
-- **Early Stopping:** patience=12 epoch, monitor val_loss
-- **Weight init:** He (Kaiming) initialization
-
----
-
-## Logic Gates
-
-| Gate | Điều kiện | Hành vi khi thất bại |
-|---|---|---|
-| **AND** | Tất cả kỹ năng bắt buộc phải có | Cảnh báo, ghi lý do |
-| **OR** | Ít nhất 1 kỹ năng ưu tiên phải có | Ghi nhận thiếu ưu tiên |
-| **NOT** | Không chứa từ khóa cấm | Cảnh báo, ghi lý do |
-| **XOR** | Đúng 1 trong 2 kỹ năng độc quyền | Cảnh báo |
-
-> Keyword matching hỗ trợ: exact match → lemmatized match → fuzzy match (Jaro-Winkler).
-
----
-
-## Cài đặt
-
-```bash
-# Tạo môi trường ảo
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # Linux/macOS
-
-# Cài thư viện
-pip install -r requirements.txt
-
-# Tải NLTK data
-python download_nltk.py
-```
-
----
-
-## Cách chạy
-
-### 1. Tiền xử lý dữ liệu
-```bash
-python main.py
-```
-Làm sạch văn bản, tạo TF-IDF vectors, lưu `tfidf_vectorizer.pkl`.
-
-### 2. Huấn luyện mô hình
-```bash
-python train.py
-```
-Huấn luyện MLP với SMOTE + Early Stopping, lưu `smartcv_model.pth`, vẽ `training_curves.png` và `confusion_matrix.png`.
-
-### 3. Chạy giao diện Streamlit
-```bash
-streamlit run App/main_ui.py
-```
-
-### 4. Dự đoán từ CLI (tùy chọn)
-```bash
-python predict.py
-```
-Chỉnh sửa `CV_PATH` và `REQUIRED_SKILLS` trong file trước khi chạy.
-
----
-
-## Giao diện Streamlit (6 trang)
-
-| Trang | Chức năng |
+| Nhóm | Thư viện |
 |---|---|
-| 🏠 Trang chủ | Dashboard tổng quan, tỷ lệ ĐẠT/LOẠI, quy trình hoạt động |
-| 💼 Chọn vị trí | Dropdown 24 vị trí, tự động điền kỹ năng mẫu |
-| ⚙️ Cấu hình lọc | Chỉnh sửa AND/OR/NOT/XOR gates với tag màu + Add/Remove |
-| 📤 Upload CV | Upload PDF, chạy toàn bộ pipeline, hiển thị kết quả nhanh |
-| 📊 Kết quả & Biểu đồ | Gauge chart, Top-8 ngành, Logic Gate visual, Skill match chart |
-| 📁 Lịch sử | Bảng lịch sử toàn bộ CV, biểu đồ phân bố ngành, xuất CSV |
-
----
-
-## Công nghệ sử dụng
-
-| Thành phần | Thư viện |
-|---|---|
-| Deep Learning | PyTorch |
-| Xử lý dữ liệu | Pandas, NumPy, Scikit-learn |
-| Oversampling | imbalanced-learn (SMOTE) |
-| NLP | NLTK (stopwords, WordNetLemmatizer) |
-| TF-IDF | Scikit-learn TfidfVectorizer |
-| PDF extraction | pdfplumber, PyPDF2, PyMuPDF |
-| OCR | EasyOCR, OpenCV, Pillow |
+| Deep Learning | PyTorch ≥ 2.0 |
+| BERT Encoder | sentence-transformers ≥ 2.2 |
+| ML / Đánh giá | scikit-learn ≥ 1.2, imbalanced-learn |
+| NLP | NLTK |
+| PDF | pdfplumber ≥ 0.10, PyPDF2, PyMuPDF |
+| OCR | EasyOCR ≥ 1.7, OpenCV, Pillow |
+| Dịch thuật | deep-translator (GoogleTranslator) |
 | Phát hiện ngôn ngữ | langdetect |
-| Dịch tự động | deep-translator (Google Translate) |
-| Giao diện | Streamlit |
-| Biểu đồ | Matplotlib |
-
----
-
-## Yêu cầu hệ thống
-
-- Python 3.10+
-- RAM: tối thiểu 4GB (EasyOCR cần ~1.5GB khi load)
-- GPU: không bắt buộc (CPU inference đủ nhanh với dataset này)
+| Web Backend | FastAPI ≥ 0.110, Uvicorn, Jinja2 |
+| Visualization | matplotlib, seaborn |

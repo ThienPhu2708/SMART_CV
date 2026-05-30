@@ -1,0 +1,63 @@
+{
+  "model": "MLP (TF-IDF)",
+  "checkpoint_epoch": 17,
+  "checkpoint_val_f1": 87.73,
+  "checkpoint_val_acc": 87.71,
+  "test_accuracy": 85.55555555555556,
+  "test_macro_f1": 85.6746197273867,
+  "test_weighted_f1": 85.6746197273867,
+  "per_class_metrics": [
+    {
+      "Class": "BUSINESS-DEVELOPMENT",
+      "Precision": "96.15%",
+      "Recall": "83.33%",
+      "F1-Score": "89.29%",
+      "Support": 30
+    },
+    {
+      "Class": "CONSULTANT",
+      "Precision": "73.53%",
+      "Recall": "83.33%",
+      "F1-Score": "78.12%",
+      "Support": 30
+    },
+    {
+      "Class": "DIGITAL-MEDIA",
+      "Precision": "86.67%",
+      "Recall": "86.67%",
+      "F1-Score": "86.67%",
+      "Support": 30
+    },
+    {
+      "Class": "INFORMATION-TECHNOLOGY",
+      "Precision": "86.67%",
+      "Recall": "86.67%",
+      "F1-Score": "86.67%",
+      "Support": 30
+    },
+    {
+      "Class": "PUBLIC-RELATIONS",
+      "Precision": "89.29%",
+      "Recall": "83.33%",
+      "F1-Score": "86.21%",
+      "Support": 30
+    },
+    {
+      "Class": "SALES",
+      "Precision": "84.38%",
+      "Recall": "90.00%",
+      "F1-Score": "87.10%",
+      "Support": 30
+    }
+  ],
+  "test_set_size": 180,
+  "num_classes": 6,
+  "classes": [
+    "BUSINESS-DEVELOPMENT",
+    "CONSULTANT",
+    "DIGITAL-MEDIA",
+    "INFORMATION-TECHNOLOGY",
+    "PUBLIC-RELATIONS",
+    "SALES"
+  ]
+}
